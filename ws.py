@@ -95,8 +95,9 @@ def DoRemoteCommand(connection,clients):
         szBuf = receiver.recv()
         #szBuf = '%s服务临时关闭'%time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
         #time.sleep(5)
-        if(szBuf == False):  
+        if szBuf == False:
             break
+            #continue
         print szBuf
         SendData(szBuf,connection,clients)  
         mu.release()
