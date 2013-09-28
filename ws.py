@@ -1,10 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/python26
 # -*- coding:utf-8 -*-
 
 import socket
 import base64,hashlib,sys,threading,struct,logging,logging.config
 import zmq
 import os
+
 
 def InitWebSocketServer(host = "localhost", port = 12345, backlog = 100):  
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
@@ -32,13 +33,16 @@ def InitWebSocketServer(host = "localhost", port = 12345, backlog = 100):
   
 def handshake(client):  
     headers = {}  
-    shake = client.recv(1024)
+    shake = client.recv(1024)  
+      
     if not len(shake):  
-        return False
+        return False  
+      
     header, data = shake.split('\r\n\r\n', 1)  
     for line in header.split("\r\n")[1:]:  
         key, value = line.split(": ", 1)  
-        headers[key] = value
+        headers[key] = value  
+      
     if(headers.has_key("Sec-WebSocket-Key") == False):  
         print("this socket is not websocket,close")  
         client.close()  
@@ -57,11 +61,9 @@ def handshake(client):
                     "WebSocket-Protocol:WebManagerSocket\r\n\r\n"  
                       
     client.send(our_handshake)  
-    return True  
-
+    return True
           
-          
-def SendData(pData,client,clients):
+def SendData(pData,client,clients):  
     if(pData == False):  
         return False  
     else:  
@@ -75,35 +77,43 @@ def SendData(pData,client,clients):
         token += struct.pack("!BH", 126, length)  
     else:  
         token += struct.pack("!BQ", 127, length)  
-    pData = '%s%s' % (token,pData)
+    pData = '%s%s' % (token,pData)  
+    #print pData
     for client in clients:
         try:
             client.send(pData)
         except:
             pass
-
+      
     return True  
   
   
-def DoRemoteCommand(connection,clients):
-    while 1:
+def DoRemoteCommand(connection,clients):  
+    while 1:  
+      if mu.acquire():
+        #szBuf = RecvData(8196,connection)  
         szBuf = receiver.recv()
-        if szBuf == False:
+        #szBuf = '%s服务临时关闭'%time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+        #time.sleep(5)
+        if(szBuf == False):  
             break
-        if szBuf=="":
-            continue
         print szBuf
-        SendData(szBuf,connection,clients)
+        SendData(szBuf,connection,clients)  
+        mu.release()
+
+
 
 
 if __name__ == "__main__":
     path=os.path.split(os.path.realpath(__file__))[0]
     logging.config.fileConfig(path+"/log4p.conf")
     logger = logging.getLogger("main")
+
     try:
             context = zmq.Context()
             receiver = context.socket(zmq.PULL)
             receiver.bind("tcp://*:5558")
+            mu=threading.Lock()
             InitWebSocketServer(host = "0.0.0.0", port = 1234)
             receiver.close()
             context.term()
